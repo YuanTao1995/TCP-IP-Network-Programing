@@ -1,15 +1,14 @@
 //
-// Created by 采香行处 on 2021/8/24.
+// Created by 采香行处 on 2021/8/25.
 //
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-void error_handling(char *message);
 
+#define BUF_SIZE 1024
 void error_handling(char *message){
     fputs(message, stderr);
     fputc('\n',stderr);
@@ -18,17 +17,14 @@ void error_handling(char *message){
 
 int main(int argc, char *argv[])
 {
-    int serv_sock;
-    int clnt_sock;
+    int serv_sock, clnt_sock;
+    char message[BUF_SIZE];
+    int str_len, i;
 
-    struct sockaddr_in serv_addr;
-    struct sockaddr_in clnt_addr;
+    struct sockaddr_in serv_addr, clnt_addr;
     socklen_t clnt_addr_size;
 
-    char message[] = "Hello World!";
-
     if (argc != 2){
-        printf("Error: argc = %d\n", argc);
         printf("Usage: %s <port>\n", argv[0]);
         exit(1);
     }
@@ -52,13 +48,23 @@ int main(int argc, char *argv[])
     }
 
     clnt_addr_size = sizeof(clnt_addr);
-    clnt_sock = accept(serv_sock, (struct sockaddr *) &clnt_addr, &clnt_addr_size);
-    if(clnt_sock == -1){
-        error_handling("accept() error");
-    }
+    for (i = 0; i < 5; ++i){
+        clnt_sock = accept(serv_sock, (struct sockaddr *) &clnt_addr, &clnt_addr_size);
+        if(clnt_sock == -1){
+            error_handling("accept() error");
+        }
+        else{
+            printf("Connected client %d\n", i+1);
+        }
 
-    write(clnt_sock, message, sizeof(message));
-    close(clnt_sock);
+        while((str_len = read(clnt_sock, message, BUF_SIZE)) != 0){
+            message[str_len] = 0;
+//            显然，strlen计算出来的字符串长度是从开始到第一个'\0'的长度，包括那个'\0'
+            printf("Received message: %s, size: %d \n", message, strlen(message));
+            write(clnt_sock, message, str_len);
+        }
+        close(clnt_sock);
+    }
     close(serv_sock);
     return 0;
 }

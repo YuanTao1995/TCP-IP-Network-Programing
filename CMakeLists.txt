@@ -4,3 +4,5 @@ project(TCP-IP-Network-Programing C)
 set(CMAKE_C_STANDARD 99)
 
 add_subdirectory(chapter1)
+add_subdirectory(chapter4)
+add_subdirectory(chapter8)
